@@ -61,6 +61,10 @@ class Camera():
     pass
 
 
+def draw_screen():
+    pass
+
+
 def main():
     pass
 
