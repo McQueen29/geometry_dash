@@ -57,6 +57,10 @@ class Statistics():
     pass
 
 
+class Camera():
+    pass
+
+
 def main():
     pass
 
