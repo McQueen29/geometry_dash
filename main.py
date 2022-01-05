@@ -1,7 +1,7 @@
+import os
+import pygame
 import pygame as pg
 import sys
-import pygame
-import os
 
 pygame.init()
 screen = pygame.display.set_mode((800, 800))
@@ -10,6 +10,7 @@ all_sprites = pygame.sprite.Group()
 blocks_group = pygame.sprite.Group()
 air_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
+walls_group = pygame.sprite.Group()
 
 
 def load_image(name, colorkey=None):
@@ -27,10 +28,12 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey)
     return image
 
+
 player_image = load_image('Player.png')
 player_image = pygame.transform.scale(player_image, (50, 50))
 box_images = load_image('box.png')
 air_image = load_image('grass.png')
+wall_image = load_image('wall.png')
 
 
 def load_skin():
@@ -43,9 +46,9 @@ def terminate():
 
 
 def start_screen():
-    text = ["Заставка", "",
+    text = ["игра", "",
             "Правила игры", "Если в правилах несколько строк,", ""
-            "то приходится выводить их построчно"]
+                                                                "то приходится выводить их построчно"]
     fon = pygame.transform.scale(load_image('fon.jpg'), (800, 400))
     screen.fill(pygame.Color('blue'))
     screen.blit(fon, (0, 0))
@@ -81,14 +84,23 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '#':
-                Blocks('wall', x, y)
+                Blocks(x, y)
+                Wall(x, y)
             elif level[y][x] == '@':
                 new_player = DefaultPlayer(x, y)
     return new_player, x, y
 
 
+class Wall(pg.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(walls_group, all_sprites)
+        self.image = wall_image
+        self.rect = self.image.get_rect()
+        self.rect = self.rect.move(tile_width * pos_x, tile_height * pos_y )
+
+
 class Blocks(pg.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
+    def __init__(self, pos_x, pos_y):
         super().__init__(blocks_group, all_sprites)
         self.image = box_images
         self.rect = self.image.get_rect()
@@ -108,10 +120,22 @@ class DefaultPlayer(pg.sprite.Sprite):
         super().__init__(player_group, all_sprites)
         self.image = player_image
         self.rect = self.image.get_rect()
-        self.rect = self.rect.move(tile_width * pos_x + 15, tile_height * pos_y + 5)
+        self.rect = self.rect.move(tile_width * pos_x + 15, tile_height * pos_y + 1)
+        self.jumpCount = 6
+        self.isjump = False
 
     def update(self, key=None):
-        self.rect.x += 10
+        self.rect.x += 12
+        if self.isjump:
+            if self.jumpCount >= -6:
+                neg = 1
+                if self.jumpCount < 0:
+                    neg = -1
+                self.rect.y -= self.jumpCount ** 2 * 1 * neg
+                self.jumpCount -= 1
+            else:
+                self.isjump = False
+                self.jumpCount = 6
 
 
 class SmallPlayer(pg.sprite.Sprite):
@@ -184,6 +208,8 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                player.isjump = True
         player_group.update()
         screen.fill(pygame.Color('black'))
         camera.update(player)
@@ -192,5 +218,5 @@ if __name__ == '__main__':
         blocks_group.draw(screen)
         player_group.draw(screen)
         pygame.display.flip()
-        clock.tick(30)
+        clock.tick(15)
     pygame.quit()
